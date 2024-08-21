@@ -3,6 +3,7 @@ from pyspark.sql.types import StructType,StructField,LongType,IntegerType,FloatT
 from pyspark.sql.functions import split,from_json,col
 import pyspark.sql.functions as F
 from pyspark.sql.functions import *
+#spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0
 
 odometrySchema = StructType([
                 StructField("id",IntegerType(),False),
@@ -32,7 +33,7 @@ sensorStreamDF = spark \
   .load() 
 
 
-sensorStreamDF = sensorStreamDF.selectExpr("CAST(value AS STRING)").select(from_json(col("value"),odometrySchema).alias("data")).select("data.*")
+sensorStreamDF1 = sensorStreamDF.selectExpr("CAST(value AS STRING)").select(from_json(col("value"),odometrySchema).alias("data")).select("data.*")
 
 # query = sensorStreamDF.writeStream \
 #     .outputMode("append") \
@@ -42,17 +43,18 @@ sensorStreamDF = sensorStreamDF.selectExpr("CAST(value AS STRING)").select(from_
 # query.awaitTermination()
 
 
-average_temperature_and_pressure_df = sensorStreamDF \
-    .withWatermark("eventTimestamp", "5 minutes") \
-    .groupBy(window("eventTimestamp", "5 minutes"),col("temperature")) \
-    .avg("temperature")\
+
+average_temperature_and_pressure_df = sensorStreamDF1 \
+    .withWatermark("eventTimestamp", "10 minutes") \
+    .groupBy(window("eventTimestamp", "10 minutes", "5 minutes"), "temperature", "pressure") \
+    .agg(avg("temperature").alias("average_temperature"), avg("pressure").alias("average_pressure")) \
+    .select(col("window.start").alias("start"), col("window.end").alias("end"), col("average_temperature"), col("average_pressure")) \
     .writeStream \
     .outputMode("update") \
     .format("console") \
     .option("truncate", False) \
     .start() \
     .awaitTermination()
-
 
 # average_temperature_and_pressure_df = sensorStreamDF \
 # #     .withWatermark("eventTimestamp", "3 minutes") \
