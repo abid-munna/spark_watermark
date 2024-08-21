@@ -30,10 +30,10 @@ services:
     networks:
       datapipeline:
         ipv4_address: 172.18.0.2
-    command: >
-      spark-submit
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0
-      /opt/bitnami/spark/home/streamingKafka2Cassandra.py
+    # command: >
+    #   spark-submit
+    #   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0
+    #   /opt/bitnami/spark/home/streamingKafka2Cassandra.py
 
   zookeeper:
     image: 'bitnami/zookeeper:latest'
